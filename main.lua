@@ -1,191 +1,157 @@
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local lp = Players.LocalPlayer
-
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/deividcomsono/Obsidian/refs/heads/main/Library.lua"))()
 
 local Window = Library:CreateWindow({
-    Title = "Infinite Realm - Ink Game",
-    Footer = "v1.0.0 - BETA",
+    Title = "Ink Game",
+    Footer = "v1.0.1 - BETA",
     ToggleKeybind = Enum.KeyCode.RightControl,
     Center = true,
     AutoShow = true
 })
 
-local Tab1 = Window:AddTab("Tab 1", "box")
+local PlayerGroup = Window:CreateTab("Player"):CreateGroup("Exploits", "Left")
+local ExploitsGroup = Window:CreateTab("Exploits"):CreateGroup("Player", "Right")
 
--- — LEFT GROUP now "Exploits" —
-local LeftGroup1 = Tab1:AddLeftGroupbox("Exploits")
-
-local tugSpam = false
-local noclipEnabled = false
-
-LeftGroup1:AddToggle("Auto Tug of War", {
-    Text = "Auto Tug of War",
-    Default = false,
-    Tooltip = "Spams the QTE remote every 0.1s",
-    Callback = function(state)
-        tugSpam = state
-    end,
-})
-
-LeftGroup1:AddButton({
-    Text = "Finish Red Light, Green Light",
-    Func = function()
-        local char = lp.Character or lp.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        hrp.CFrame = CFrame.new(-43.84, 1025.06, 136.77)
-    end,
-})
-
-LeftGroup1:AddButton({
-    Text = "Finish Glass Game",
-    Func = function()
-        local char = lp.Character or lp.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-        hrp.CFrame = CFrame.new(-212.0, 521.0, -1534.9)
-    end,
-})
-
-LeftGroup1:AddToggle("Noclip", {
-    Text = "Noclip",
-    Default = false,
-    Tooltip = "Disable collisions with objects",
-    Callback = function(state)
-        noclipEnabled = state
-    end,
-})
-
--- — RIGHT GROUP now "Player" —
-local RightGroup1 = Tab1:AddRightGroupbox("Player")
-
-local walkSpeedVal = 16
-local tpWalkSpeedVal = 0.3
-local jumpPowerVal = 50
-local fovVal = 70
-local tpwalking = false
-local InfiniteJumpEnabled = false
-
-local char = lp.Character or lp.CharacterAdded:Wait()
-local hum = char:FindFirstChildWhichIsA("Humanoid")
-
-lp.CharacterAdded:Connect(function(newChar)
-    char = newChar
-    hum = char:WaitForChild("Humanoid")
-end)
-
-RunService.Heartbeat:Connect(function()
-    if char and hum then
-        hum.WalkSpeed = walkSpeedVal
-        hum.JumpPower = jumpPowerVal
-        if tpwalking and hum.MoveDirection.Magnitude > 0 then
-            hum.PlatformStand = false
-            char:TranslateBy(hum.MoveDirection * tpWalkSpeedVal)
-        end
-        if noclipEnabled then
-            for _, part in pairs(char:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                end
-            end
-        end
+PlayerGroup:AddSlider("Walkspeed", {
+    Text = "Walkspeed",
+    Min = 1,
+    Max = 100,
+    Default = 24,
+    Callback = function(val)
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = val end
     end
-    workspace.CurrentCamera.FieldOfView = fovVal
-end)
-
-RightGroup1:AddSlider("WalkSpeed", {
-    Text = "WalkSpeed",
-    Default = walkSpeedVal,
-    Min = 16,
-    Max = 250,
-    Rounding = 1,
-    Compact = false,
-    Callback = function(value)
-        walkSpeedVal = value
-    end,
 })
 
-RightGroup1:AddSlider("TpWalkSpeed", {
-    Text = "TpWalkSpeed",
-    Default = tpWalkSpeedVal,
+PlayerGroup:AddSlider("TPWalkspeed", {
+    Text = "TP Walk Speed",
     Min = 0.1,
-    Max = 2,
-    Rounding = 2,
-    Compact = false,
-    Callback = function(value)
-        tpWalkSpeedVal = value
-    end,
+    Max = 3,
+    Default = 0.3,
+    Callback = function(val)
+        _G.tpWalkSpeed = val
+    end
 })
 
-RightGroup1:AddSlider("JumpPower", {
-    Text = "JumpPower",
-    Default = jumpPowerVal,
+PlayerGroup:AddSlider("JumpPower", {
+    Text = "Jump Power",
+    Min = 10,
+    Max = 200,
+    Default = 50,
+    Callback = function(val)
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.JumpPower = val end
+    end
+})
+
+PlayerGroup:AddSlider("FOV", {
+    Text = "Field of View",
     Min = 50,
-    Max = 300,
-    Rounding = 1,
-    Compact = false,
-    Callback = function(value)
-        jumpPowerVal = value
-    end,
-})
-
-RightGroup1:AddSlider("FOV", {
-    Text = "FOV",
-    Default = fovVal,
-    Min = 70,
     Max = 120,
-    Rounding = 0,
-    Compact = false,
-    Callback = function(value)
-        fovVal = value
-    end,
+    Default = 70,
+    Callback = function(val)
+        game:GetService("Workspace").Camera.FieldOfView = val
+    end
 })
 
-RightGroup1:AddToggle("Enable TpWalk", {
-    Text = "Enable TpWalk",
-    Default = false,
-    Tooltip = "Enables TP-style walking that bypasses stun.",
-    Callback = function(state)
-        tpwalking = state
-    end,
-})
-
-RightGroup1:AddToggle("Infinite Jump", {
+PlayerGroup:AddToggle("InfiniteJump", {
     Text = "Infinite Jump",
     Default = false,
-    Tooltip = "Jump infinitely by holding or spamming jump.",
     Callback = function(state)
-        InfiniteJumpEnabled = state
-    end,
+        if state then
+            _G.infJump = true
+            game:GetService("UserInputService").JumpRequest:Connect(function()
+                if _G.infJump then
+                    local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+                    if hum then hum:ChangeState("Jumping") end
+                end
+            end)
+        else
+            _G.infJump = false
+        end
+    end
 })
 
-UserInputService.JumpRequest:Connect(function()
-    if InfiniteJumpEnabled then
-        local char = lp.Character
-        if char then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                hum:ChangeState(Enum.HumanoidStateType.Jumping)
+
+--Exploits Group
+
+ExploitsGroup:AddButton("Skip Red Light Green Light", function()
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-130, 530, -1500))
+end)
+
+ExploitsGroup:AddButton("Finish Glass Game", function()
+    game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-212.0, 521.0, -1534.9))
+end)
+
+-- Expand Guards Hitbox Toggle
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local liveFolder = workspace:FindFirstChild("Live")
+
+local guardsExpanded = false
+local processedModels = {}
+local TARGET_SIZE = Vector3.new(4, 4, 4)
+
+local function isPlayerCharacter(model)
+    return Players:FindFirstChild(model.Name) ~= nil
+end
+
+local function processModel(model)
+    if not model or not model:IsA("Model") then return end
+    if isPlayerCharacter(model) then return end
+    if processedModels[model] then return end
+
+    local head = model:FindFirstChild("Head")
+    if not head or not head:IsA("BasePart") then return end
+
+    if not model:FindFirstChild("_HeadHighlighter") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "_HeadHighlighter"
+        highlight.Adornee = model
+        highlight.FillColor = Color3.fromRGB(255, 80, 80)
+        highlight.OutlineColor = Color3.new(1, 1, 1)
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = model
+    end
+
+    processedModels[model] = head
+end
+
+RunService.Heartbeat:Connect(function()
+    if not guardsExpanded then return end
+    for _, model in ipairs(liveFolder:GetChildren()) do
+        processModel(model)
+    end
+    for model, head in pairs(processedModels) do
+        if model and model.Parent and head and head.Parent then
+            if head.Size ~= TARGET_SIZE then
+                head.Size = TARGET_SIZE
+                head.CanCollide = false
             end
+        else
+            processedModels[model] = nil
         end
     end
 end)
 
-task.spawn(function()
-    while true do
-        if tugSpam then
-            local args = {
-                [1] = {
-                    QTEGood = true
-                }
-            }
-
-            pcall(function()
-                ReplicatedStorage:WaitForChild("Remotes", 9e9):WaitForChild("TemporaryReachedBindable", 9e9):FireServer(unpack(args))
-            end)
+ExploitsGroup:AddToggle("Expand Guards Hitbox", {
+    Text = "Expand Guards Hitbox",
+    Default = false,
+    Callback = function(state)
+        guardsExpanded = state
+        if not state then
+            for model, head in pairs(processedModels) do
+                if head and head.Parent then
+                    pcall(function()
+                        head.Size = Vector3.new(1, 1, 1)
+                        head.CanCollide = true
+                    end)
+                end
+                local highlight = model:FindFirstChild("_HeadHighlighter")
+                if highlight then
+                    highlight:Destroy()
+                end
+            end
+            processedModels = {}
         end
-        task.wait(0.1)
     end
-end)
+})
