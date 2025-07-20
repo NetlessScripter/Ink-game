@@ -70,6 +70,34 @@ tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 8)
 
 local UILib = {}
+local uiVisible = true
+
+function UILib:ToggleUI()
+	uiVisible = not uiVisible
+	mainFrame.Visible = uiVisible
+end
+
+local ScreenGuiToggle = Instance.new("ScreenGui")
+ScreenGuiToggle.Name = "ScreenGuiToggle"
+ScreenGuiToggle.Parent = player:WaitForChild("PlayerGui")
+ScreenGuiToggle.ResetOnSpawn = false
+
+local Toggle = Instance.new("ImageButton")
+Toggle.Name = "Toggle"
+Toggle.Parent = ScreenGuiToggle
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Toggle.Position = UDim2.new(0, 0, 0.454706937, 0)
+Toggle.Size = UDim2.new(0, 50, 0, 50)
+Toggle.Image = "rbxassetid://118398967616157"
+Toggle.Draggable = true
+
+local Corner = Instance.new("UICorner")
+Corner.Name = "Corner"
+Corner.Parent = Toggle
+
+Toggle.MouseButton1Click:Connect(function()
+	UILib:ToggleUI()
+end)
 
 local currentTab = nil
 
