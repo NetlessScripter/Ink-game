@@ -54,7 +54,7 @@ toggleButton.Position = UDim2.new(0, 0, 0.45, 0)
 toggleButton.Size = UDim2.new(0, 50, 0, 50)
 toggleButton.Image = "rbxassetid://118398967616157"
 toggleButton.Draggable = true
-local corner = Instance.new("UICorner", toggleButton)
+Instance.new("UICorner", toggleButton)
 
 toggleButton.MouseButton1Click:Connect(function()
 	UILib:ToggleUI()
@@ -165,6 +165,197 @@ function UILib:NewTab(tabName, iconId)
 			label.BackgroundTransparency = 1
 
 			button.MouseButton1Click:Connect(callback)
+		end
+
+		function SectionObject:NewToggle(text, default, callback)
+			local toggleFrame = Instance.new("Frame", tabPage)
+			toggleFrame.Size = UDim2.new(0, 300, 0, 35)
+			toggleFrame.BackgroundTransparency = 1
+
+			local label = Instance.new("TextLabel", toggleFrame)
+			label.Text = text
+			label.Font = Enum.Font.RobotoMono
+			label.TextSize = 18
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.BackgroundTransparency = 1
+			label.Size = UDim2.new(1, -40, 1, 0)
+			label.TextXAlignment = Enum.TextXAlignment.Left
+
+			local toggleButton = Instance.new("TextButton", toggleFrame)
+			toggleButton.Size = UDim2.new(0, 30, 0, 30)
+			toggleButton.Position = UDim2.new(1, -35, 0, 2)
+			toggleButton.BackgroundColor3 = default and Color3.fromRGB(27, 150, 72) or Color3.fromRGB(100, 100, 100)
+			toggleButton.AutoButtonColor = false
+			toggleButton.Text = ""
+			toggleButton.ClipsDescendants = true
+			Instance.new("UICorner", toggleButton)
+
+			local toggled = default
+
+			local function updateToggle(state)
+				toggled = state
+				toggleButton.BackgroundColor3 = toggled and Color3.fromRGB(27, 150, 72) or Color3.fromRGB(100, 100, 100)
+			end
+
+			toggleButton.MouseButton1Click:Connect(function()
+				updateToggle(not toggled)
+				if callback then
+					callback(toggled)
+				end
+			end)
+
+			updateToggle(default)
+		end
+
+		function SectionObject:NewSlider(text, min, max, default, callback)
+			local sliderFrame = Instance.new("Frame", tabPage)
+			sliderFrame.Size = UDim2.new(0, 300, 0, 50)
+			sliderFrame.BackgroundTransparency = 1
+
+			local label = Instance.new("TextLabel", sliderFrame)
+			label.Text = text .. ": " .. tostring(default)
+			label.Font = Enum.Font.RobotoMono
+			label.TextSize = 18
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.BackgroundTransparency = 1
+			label.Size = UDim2.new(1, 0, 0, 20)
+			label.TextXAlignment = Enum.TextXAlignment.Left
+
+			local sliderBar = Instance.new("Frame", sliderFrame)
+			sliderBar.Size = UDim2.new(1, 0, 0, 15)
+			sliderBar.Position = UDim2.new(0, 0, 0, 30)
+			sliderBar.BackgroundColor3 = Color3.fromRGB(27, 150, 72)
+			Instance.new("UICorner", sliderBar)
+
+			local sliderFill = Instance.new("Frame", sliderBar)
+			sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+			sliderFill.BackgroundColor3 = Color3.fromRGB(45, 255, 45)
+			Instance.new("UICorner", sliderFill)
+
+			local dragging = false
+
+			local function updateSlider(x)
+				local relativeX = math.clamp(x - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
+				local percent = relativeX / sliderBar.AbsoluteSize.X
+				local value = math.floor(min + (max - min) * percent)
+				sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+				label.Text = text .. ": " .. tostring(value)
+				if callback then
+					callback(value)
+				end
+			end
+
+			sliderBar.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = true
+					updateSlider(input.Position.X)
+				end
+			end)
+
+			sliderBar.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = false
+				end
+			end)
+
+			UserInputService.InputChanged:Connect(function(input)
+				if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					updateSlider(input.Position.X)
+				end
+			end)
+		end
+
+		function SectionObject:NewTextbox(text, placeholder, callback)
+			local boxFrame = Instance.new("Frame", tabPage)
+			boxFrame.Size = UDim2.new(0, 300, 0, 40)
+			boxFrame.BackgroundTransparency = 1
+
+			local label = Instance.new("TextLabel", boxFrame)
+			label.Text = text
+			label.Font = Enum.Font.RobotoMono
+			label.TextSize = 18
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.BackgroundTransparency = 1
+			label.Size = UDim2.new(1, 0, 0, 20)
+			label.TextXAlignment = Enum.TextXAlignment.Left
+
+			local textbox = Instance.new("TextBox", boxFrame)
+			textbox.PlaceholderText = placeholder or ""
+			textbox.Font = Enum.Font.RobotoMono
+			textbox.TextSize = 18
+			textbox.TextColor3 = Color3.new(1, 1, 1)
+			textbox.BackgroundColor3 = Color3.fromRGB(33, 132, 66)
+			textbox.Size = UDim2.new(1, 0, 0, 20)
+			textbox.Position = UDim2.new(0, 0, 0, 20)
+			Instance.new("UICorner", textbox)
+
+			textbox.FocusLost:Connect(function(enterPressed)
+				if enterPressed and callback then
+					callback(textbox.Text)
+				end
+			end)
+		end
+
+		function SectionObject:NewColorSlider(text, defaultColor, callback)
+			local colorFrame = Instance.new("Frame", tabPage)
+			colorFrame.Size = UDim2.new(0, 300, 0, 80)
+			colorFrame.BackgroundTransparency = 1
+
+			local label = Instance.new("TextLabel", colorFrame)
+			label.Text = text
+			label.Font = Enum.Font.RobotoMono
+			label.TextSize = 18
+			label.TextColor3 = Color3.new(1, 1, 1)
+			label.BackgroundTransparency = 1
+			label.Size = UDim2.new(1, 0, 0, 20)
+			label.TextXAlignment = Enum.TextXAlignment.Left
+
+			local hueSliderFrame = Instance.new("Frame", colorFrame)
+			hueSliderFrame.Size = UDim2.new(1, 0, 0, 20)
+			hueSliderFrame.Position = UDim2.new(0, 0, 0, 25)
+			hueSliderFrame.BackgroundColor3 = Color3.fromRGB(27, 150, 72)
+			Instance.new("UICorner", hueSliderFrame)
+
+			local hueFill = Instance.new("Frame", hueSliderFrame)
+			hueFill.Size = UDim2.new(defaultColor and defaultColor.R or 0, 0, 1, 0)
+			hueFill.BackgroundColor3 = Color3.fromRGB(45, 255, 45)
+			Instance.new("UICorner", hueFill)
+
+			local dragging = false
+
+			local function updateColorSlider(x)
+				local relativeX = math.clamp(x - hueSliderFrame.AbsolutePosition.X, 0, hueSliderFrame.AbsoluteSize.X)
+				local percent = relativeX / hueSliderFrame.AbsoluteSize.X
+				hueFill.Size = UDim2.new(percent, 0, 1, 0)
+
+				local hue = percent
+				local saturation = 1
+				local value = 1
+
+				local color = Color3.fromHSV(hue, saturation, value)
+				if callback then
+					callback(color)
+				end
+			end
+
+			hueSliderFrame.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = true
+					updateColorSlider(input.Position.X)
+				end
+			end)
+
+			hueSliderFrame.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					dragging = false
+				end
+			end)
+
+			UserInputService.InputChanged:Connect(function(input)
+				if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+					updateColorSlider(input.Position.X)
+				end
+			end)
 		end
 
 		return SectionObject
