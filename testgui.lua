@@ -1,11 +1,3 @@
-local Players = game:GetService("Players")
-local Lighting = game:GetService("Lighting")
-local player = Players.LocalPlayer
-
-local blur = Instance.new("BlurEffect", Lighting)
-blur.Size = 24
-blur.Name = "UILibBlur"
-
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "UILibrary"
 gui.ResetOnSpawn = false
