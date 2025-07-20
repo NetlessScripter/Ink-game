@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 
 if _G.UIBlur == true then
@@ -69,6 +70,25 @@ local tabLayout = Instance.new("UIListLayout", tabContainer)
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
 tabLayout.Padding = UDim.new(0, 8)
 
+local function typeText(guiTextObject, fullText, duration)
+    duration = duration or 1
+    guiTextObject.Text = ""
+    local length = #fullText
+    local elapsed = 0
+    local steppedConnection
+
+    local startTime = tick()
+    steppedConnection = RunService.Heartbeat:Connect(function()
+        elapsed = tick() - startTime
+        local progress = math.clamp(elapsed / duration, 0, 1)
+        local charsToShow = math.floor(progress * length)
+        guiTextObject.Text = string.sub(fullText, 1, charsToShow)
+        if progress >= 1 then
+            steppedConnection:Disconnect()
+        end
+    end)
+end
+
 local UILib = {}
 
 local currentTab = nil
@@ -110,7 +130,7 @@ function UILib:NewTab(tabName, iconId)
 	end
 
 	local label = Instance.new("TextLabel", iconContainer)
-	label.Text = tabName
+	label.Text = ""
 	label.Font = Enum.Font.RobotoMono
 	label.TextSize = 19
 	label.TextColor3 = Color3.fromRGB(230, 255, 230)
@@ -142,12 +162,30 @@ function UILib:NewTab(tabName, iconId)
 			tabPage.Visible = true
 			currentTab = tabPage
 			tabSwitchSound:Play()
+
+			local label = tabButton:FindFirstChild("Label")
+			if label then
+				typeText(label, tabName, 1)
+			end
+
+			for _, child in pairs(tabPage:GetChildren()) do
+				if child:IsA("TextLabel") or child:IsA("TextButton") then
+					typeText(child, child.Text, 1)
+				elseif child:IsA("Frame") then
+					for _, sub in pairs(child:GetChildren()) do
+						if (sub:IsA("TextLabel") or sub:IsA("TextButton")) and sub.Text ~= "" then
+							typeText(sub, sub.Text, 1)
+						end
+					end
+				end
+			end
 		end
 	end)
 
 	if #tabContainer:GetChildren() == 2 then
 		tabPage.Visible = true
 		currentTab = tabPage
+		typeText(tabButton:FindFirstChild("Label"), tabName, 1)
 	end
 
 	local TabObject = {}
@@ -155,7 +193,7 @@ function UILib:NewTab(tabName, iconId)
 	function TabObject:NewSection(sectionName)
 		local sectionLabel = Instance.new("TextLabel", tabPage)
 		sectionLabel.Size = UDim2.new(1, -14, 0, 34)
-		sectionLabel.Text = sectionName
+		sectionLabel.Text = ""
 		sectionLabel.Font = Enum.Font.RobotoMono
 		sectionLabel.TextColor3 = Color3.fromRGB(230, 255, 230)
 		sectionLabel.BackgroundColor3 = Color3.fromRGB(40, 180, 85)
@@ -164,6 +202,7 @@ function UILib:NewTab(tabName, iconId)
 		sectionLabel.TextXAlignment = Enum.TextXAlignment.Left
 		local corner = Instance.new("UICorner", sectionLabel)
 		corner.CornerRadius = UDim.new(0, 10)
+		typeText(sectionLabel, sectionName, 1)
 
 		local SectionObject = {}
 
@@ -172,7 +211,8 @@ function UILib:NewTab(tabName, iconId)
 			button.Size = UDim2.new(0, 300, 0, 44)
 			button.BackgroundColor3 = Color3.fromRGB(42, 150, 74)
 			button.AutoButtonColor = true
-			button.Text = text .. (desc and (" - " .. desc) or "")
+			local fullButtonText = text .. (desc and (" - " .. desc) or "")
+			button.Text = ""
 			button.Font = Enum.Font.RobotoMono
 			button.TextSize = 19
 			button.TextColor3 = Color3.fromRGB(230, 255, 230)
@@ -181,6 +221,7 @@ function UILib:NewTab(tabName, iconId)
 			local stroke = Instance.new("UIStroke", button)
 			stroke.Color = Color3.fromRGB(70, 200, 100)
 			stroke.Thickness = 2
+			typeText(button, fullButtonText, 1)
 			button.MouseButton1Click:Connect(callback)
 		end
 
@@ -192,12 +233,13 @@ function UILib:NewTab(tabName, iconId)
 			local label = Instance.new("TextLabel", toggleFrame)
 			label.Size = UDim2.new(1, -44, 1, 0)
 			label.Position = UDim2.new(0, 8, 0, 0)
-			label.Text = text
+			label.Text = ""
 			label.Font = Enum.Font.RobotoMono
 			label.TextSize = 19
 			label.TextColor3 = Color3.fromRGB(230, 255, 230)
 			label.BackgroundTransparency = 1
 			label.TextXAlignment = Enum.TextXAlignment.Left
+			typeText(label, text, 1)
 
 			local button = Instance.new("TextButton", toggleFrame)
 			button.Size = UDim2.new(0, 34, 0, 34)
@@ -237,12 +279,13 @@ function UILib:NewTab(tabName, iconId)
 			local label = Instance.new("TextLabel", sliderFrame)
 			label.Size = UDim2.new(1, -56, 1, 0)
 			label.Position = UDim2.new(0, 8, 0, 0)
-			label.Text = text
+			label.Text = ""
 			label.Font = Enum.Font.RobotoMono
 			label.TextSize = 19
 			label.TextColor3 = Color3.fromRGB(230, 255, 230)
 			label.BackgroundTransparency = 1
 			label.TextXAlignment = Enum.TextXAlignment.Left
+			typeText(label, text, 1)
 
 			local valueLabel = Instance.new("TextLabel", sliderFrame)
 			valueLabel.Size = UDim2.new(0, 46, 1, 0)
@@ -299,12 +342,13 @@ function UILib:NewTab(tabName, iconId)
 			local label = Instance.new("TextLabel", textBoxFrame)
 			label.Size = UDim2.new(1, -120, 1, 0)
 			label.Position = UDim2.new(0, 8, 0, 0)
-			label.Text = text
+			label.Text = ""
 			label.Font = Enum.Font.RobotoMono
 			label.TextSize = 19
 			label.TextColor3 = Color3.fromRGB(230, 255, 230)
 			label.BackgroundTransparency = 1
 			label.TextXAlignment = Enum.TextXAlignment.Left
+			typeText(label, text, 1)
 
 			local box = Instance.new("TextBox", textBoxFrame)
 			box.Size = UDim2.new(0, 110, 0, 28)
@@ -336,12 +380,13 @@ function UILib:NewTab(tabName, iconId)
 			local label = Instance.new("TextLabel", frame)
 			label.Size = UDim2.new(1, -10, 0, 22)
 			label.Position = UDim2.new(0, 8, 0, 0)
-			label.Text = text
+			label.Text = ""
 			label.Font = Enum.Font.RobotoMono
 			label.TextSize = 19
 			label.TextColor3 = Color3.fromRGB(230, 255, 230)
 			label.BackgroundTransparency = 1
 			label.TextXAlignment = Enum.TextXAlignment.Left
+			typeText(label, text, 1)
 
 			local sliderFrame = Instance.new("Frame", frame)
 			sliderFrame.Size = UDim2.new(1, -16, 0, 34)
