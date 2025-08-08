@@ -1,0 +1,201 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+local MeshEmit = require(ReplicatedStorage.Resources.LegacyReplication.meshemit)
+local library = require(ReplicatedStorage.library)
+
+local PlayAttachment = library.PlayAttachment
+local Maid = library.Maid
+local EFP = library.EFP
+local QuickFX = library.QuickFX
+local dtwait = library.dtwait
+local PlayMesh = library.PlayMesh
+local PlayTween = library.PlayTween
+
+local vfx = ReplicatedStorage.Emotes.VFX.VfxMods.Max3Events.vfx
+local Char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+local HRP = Char:WaitForChild("HumanoidRootPart")
+
+local function FirstEvent()
+	local maid = Maid.new()
+	for _, v in pairs(maid:give(vfx["Left Leg"]:Clone()):GetChildren()) do
+		maid:give(v)
+		v.Parent = Char["Left Leg"]
+	end
+	PlayAttachment(Char["Left Leg"])
+end
+
+local function KickEvent()
+	local maid = Maid.new()
+	local fx1 = QuickFX({ FX = vfx.kick1, Maid = maid, Anchor = HRP.CFrame })
+	fx1.Part.Part0 = HRP
+	fx1.Part.Part1 = fx1.huh
+
+	local slash = QuickFX({
+		FX = vfx.Slash,
+		Maid = maid,
+		Anchor = HRP.CFrame * CFrame.new(0, 0, 1) * CFrame.Angles(0, 0, math.pi/2),
+	})
+	slash:ScaleTo(0.4)
+
+	task.spawn(function()
+		local Slash = require(slash.Slash.Slash)
+		for i = 1, #Slash, 2 do
+			if not slash.Parent then break end
+			slash.Slash.Decal.Texture = Slash[i]
+			dtwait(0.15 / #Slash * 2)
+		end
+		slash.Slash.Decal:Destroy()
+		for _, v in slash:GetDescendants() do
+			if v:IsA("SpotLight") then
+				TweenService:Create(v, TweenInfo.new(0.2, Enum.EasingStyle.Sine), { Brightness = 0 }):Play()
+			end
+		end
+	end)
+
+	PlayAttachment(fx1)
+
+	for _, v in fx1:GetDescendants() do
+		if v:IsA("Beam") then
+			v.Brightness = 0.9
+			TweenService:Create(v, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+				Brightness = 0
+			}):Play()
+		end
+	end
+end
+
+local function Kick2Event()
+	local maid = Maid.new()
+	local fx = QuickFX({ FX = vfx.t, Maid = maid, Anchor = HRP.CFrame })
+	fx.Part.Part0 = HRP
+	fx.Part.Part1 = fx.Part2
+	PlayAttachment(fx)
+
+	local meshModel = maid:give(Instance.new("Model"))
+	for _, v in pairs(vfx.Mesh.Hmm:GetChildren()) do
+		v:Clone().Parent = meshModel
+	end
+	for _, v in pairs(meshModel:GetChildren()) do
+		v:PivotTo(HRP.CFrame * v:GetAttribute("Offset"):Inverse())
+	end
+	meshModel.Parent = EFP
+
+	local impact = maid:give(vfx.MeshImpact:Clone())
+	impact:ScaleTo(1)
+	PlayMesh({
+		Model = impact,
+		EndT = 0,
+		Anchor = HRP.CFrame * CFrame.new(0, 0, -1) * CFrame.Angles(0, -math.pi/2, -0.8726646259971648) * CFrame.new(8, 0, 0),
+		Info = TweenInfo.new(0.05, Enum.EasingStyle.Sine)
+	})
+
+	for _, v in meshModel:GetChildren() do
+		MeshEmit(v)
+	end
+
+	local torsoFX = maid:give(vfx.Torso:Clone())
+	for _, v in torsoFX:GetDescendants() do
+		if v:IsA("Beam") then
+			PlayTween(v, {
+				Time = 0.4,
+				EasingStyle = "Sine",
+				Goal = {
+					Transparency = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 1),
+						NumberSequenceKeypoint.new(1, 1)
+					})
+				}
+			})
+			game.Debris:AddItem(v, 0.4)
+		end
+	end
+	for _, v in torsoFX:GetChildren() do
+		maid:give(v)
+		v.Parent = Char.Torso
+	end
+end
+
+local function SpinEvent()
+	local maid = Maid.new()
+	local fx = QuickFX({ FX = vfx.Spin, Maid = maid, Anchor = HRP.CFrame })
+	fx.s.Part0 = HRP
+	fx.s.Part1 = fx.s2
+	PlayAttachment(fx)
+
+	local startTime = tick()
+
+	task.spawn(function()
+		while tick() - startTime < 1 do
+			local dur = Random.new():NextNumber(0.14, 0.23)
+			local clone = vfx.BeamSlash:Clone()
+			game.Debris:AddItem(clone, 0.5)
+			clone:ScaleTo(Random.new():NextNumber(0.9, 1.3))
+			clone.PrimaryPart.CFrame = fx.PrimaryPart.CFrame * CFrame.Angles(math.rad(math.random(-13, 13)), math.rad(math.random(-180, 180)), math.rad(math.random(-13, 13)))
+			clone.Parent = EFP
+			TweenService:Create(clone.PrimaryPart, TweenInfo.new(dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+				CFrame = clone.PrimaryPart.CFrame * CFrame.Angles(0, math.rad(math.random(120, 170)), 0)
+			}):Play()
+			for _, v in clone:GetDescendants() do
+				if v:IsA("Beam") then
+					TweenService:Create(v, TweenInfo.new(dur, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
+						Width0 = 0,
+						Width1 = 0
+					}):Play()
+				end
+			end
+			task.wait(0.1)
+		end
+	end)
+
+	task.spawn(function()
+		while tick() - startTime < 1 do
+			local size = math.random(21, 26)
+			local wind = vfx.Wind:Clone()
+			game.Debris:AddItem(wind, 1)
+			wind.PrimaryPart.CFrame = fx.PrimaryPart.CFrame * CFrame.new(0, Random.new():NextNumber(-0.5, -0.1), 0) *
+				CFrame.Angles(math.rad(math.random(-6, 6)), math.rad(math.random(-180, 180)), math.rad(math.random(-6, 6)))
+			wind.Parent = EFP
+			TweenService:Create(wind.PrimaryPart, TweenInfo.new(Random.new():NextNumber(0.3, 0.5), Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				Size = Vector3.new(size, 5.783, size),
+				Transparency = 1,
+				CFrame = wind.PrimaryPart.CFrame * CFrame.Angles(0, math.rad(math.random(66, 140)), 0)
+			}):Play()
+			task.wait(0.155)
+		end
+	end)
+end
+
+local function Kick3Event()
+	local maid = Maid.new()
+	PlayAttachment(QuickFX({
+		FX = vfx.heheh,
+		Maid = maid,
+		Anchor = HRP.CFrame * vfx.heheh:GetAttribute("Offset"):Inverse()
+	}))
+
+	local meshModel = maid:give(Instance.new("Model"))
+	for _, v in pairs(vfx.Mesh.uh:GetChildren()) do
+		v:Clone().Parent = meshModel
+	end
+	for _, v in pairs(meshModel:GetChildren()) do
+		v:PivotTo(HRP.CFrame * v:GetAttribute("Offset"):Inverse())
+	end
+	meshModel.Parent = EFP
+
+	for _, v in meshModel:GetChildren() do
+		MeshEmit(v)
+	end
+end
+
+task.spawn(function()
+	FirstEvent()
+	task.wait(0.5)
+	KickEvent()
+	task.wait(0.4)
+	Kick2Event()
+	task.wait(0.4)
+	SpinEvent()
+	task.wait(1.4)
+	Kick3Event()
+end)
